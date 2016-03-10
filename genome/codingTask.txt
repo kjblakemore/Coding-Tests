@@ -1,0 +1,30 @@
+In any project, communication between the developer and the project team about specific requirements/specs/needs/desires for the solution is key.
+
+In this coding task we will not have the opportunity for such back and forth. 
+
+Along with your solution please note any questions or clarifications that you would have asked, and note any assumptions that you made in order to finish the coding task.
+
+
+Problem
+Given a sequence of DNA (found in the file codingTaskSequence.fa),
+	Find all 23 base pair sequences that end in NGG (N can be any base)
+		We will call the first 20 bases the 'target', and the final 3 bases the 'PAM'
+
+From the possible 'targets':
+	Filter them and score them.
+	Produce an output with (at least):
+		Target sequence
+		PAM sequence
+		Score
+		Whether the target 'hits' a gene from the annotation file (codingTaskAnnotation.gff3)
+
+Filter out:
+    Targets that are not between 20%-80% GC content
+    Targets with an ATG motifs
+    Targets with homopolymers of more than 4 in a row (eg. ACGATCCCCCGACGTGATCGAGG, has 5 C’s)
+    
+Score:
+    Preference given to targets that have a PAM with a G or C as its first nucleotide
+    Preference for targets closest to 45% GC content.
+    Preference given to targets with high 'specificity' for their 'seed region' (nucleotides 13-20, 1-based numbering).
+    	specificity meaning unquiesness of the 8-mer in the entire sequence file (codingTaskSequence.fa)
