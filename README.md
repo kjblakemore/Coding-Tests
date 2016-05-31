@@ -4,6 +4,8 @@
 
  The subdirectories are:
   * genome - python script to process genome sequences
-  * java
-  * python
-  * scala
+  * java - string processing and discrete math
+  * java-refactoring-exercise - a basic user management application
+  * python - string processing and discrete math
+  * scala/code.scala - same as java subdirectory
+  * scala/code2.scala - one line scala array & math functions
