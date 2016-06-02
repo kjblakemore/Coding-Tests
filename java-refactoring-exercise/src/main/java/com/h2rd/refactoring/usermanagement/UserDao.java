@@ -1,71 +1,76 @@
 package com.h2rd.refactoring.usermanagement;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Collection;
 
+/**
+ * The UserDao class maintains informatioin for all users who are currently 
+ * registered.  The users are uniquely identified by their email address.
+ */
 public class UserDao {
 
-    public ArrayList<User> users;
+    private static HashMap<String, User> users;    // Maps email to user entry
 
     public static UserDao userDao;
 
+    /**
+     * Return Data Access Object to User entries.  If first call, initialze
+     * the access object and user database.
+     */
     public static UserDao getUserDao() {
         if (userDao == null) {
+            users = new HashMap<String, User>();
             userDao = new UserDao();
         }
         return userDao;
     }
 
-    public void saveUser(User user) {
-        if (users == null) {
-            users = new ArrayList<User>();
-        }
-        users.add(user);
+    /**
+     * Return collection of all users that are currently registered..
+     *
+     */
+    public Collection<User> getUsers() {
+        return users.values();
     }
 
-    public ArrayList<User> getUsers() {
-        try {
-            return users;
-        } catch (Throwable e) {
-            System.out.println("error");
-            return null;
-        }
+    /**
+     * Save user info.  If already saved, return null.  Else, return user object.
+     */
+    public User saveUser(String name, String email, List<String> roles) {
+        User user;
+
+        if (users.containsKey(email)==true) return null;
+        user = new User(name, email, roles);
+        users.put(email, user);
+        return user;
     }
 
-    public void deleteUser(User userToDelete) {
-        try {
-            for (User user : users) {
-                if (user.getName() == userToDelete.getName()) {
-                    users.remove(user);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    /**
+     * Delete user.  If not previously saved, return null. Else, return user object.
+     */
+    public User deleteUser(String email) {
+        return users.remove(email);
     }
 
-    public void updateUser(User userToUpdate) {
-        try {
-            for (User user : users) {
-                if (user.getName() == userToUpdate.getName()) {
-                    user.setEmail(userToUpdate.getEmail());
-                    user.setRoles(userToUpdate.getRoles());
-                }
-            }
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }
+    /**
+     * Update user name and roles.  If user was not previously saved, return null. 
+     * Else, return user object.
+     */
+    public User updateUser(String name, String email, List<String> roles) {
+        User user;
+
+        user = users.get(email);
+        if (user == null) return null;
+
+        user.update(name, roles);
+        return user;
     }
 
-    public User findUser(String name) {
-        try {
-            for (User user : users) {
-                if (user.getName() == name) {
-                    return user;
-                }
-            }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-        return null;
+    /**
+     * Find user.  If not found, return null.  Else, return user object.
+     */
+    public User findUser(String email) {
+        return users.get(email);
     }
 }

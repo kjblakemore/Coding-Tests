@@ -8,6 +8,9 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 
+import java.util.List;
+import java.util.Arrays;
+
 public class UserResourceUnitTest {
 
     UserResource userResource;
@@ -15,14 +18,16 @@ public class UserResourceUnitTest {
 
     @Test
     public void getUsersTest() {
+        User user;
 
         userResource = new UserResource();
         userDao = UserDao.getUserDao();
 
-        User user = new User();
-        user.setName("fake user");
-        user.setEmail("fake@user.com");
-        userDao.saveUser(user);
+        String name = "fake user";
+        String email = "fake@user.com";
+        List<String> roles = Arrays.asList("admin", "master");
+
+        user = userDao.saveUser(name, email, roles);
 
         Response response = userResource.getUsers();
         Assert.assertEquals(200, response.getStatus());
