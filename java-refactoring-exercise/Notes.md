@@ -2,12 +2,12 @@ App Deployment
 --------------
 1. Startup tomcat server
 	
-	/usr/local/apache-tomcat-8.0.32/startup.sh
+	/usr/local/apache-tomcat-8.0.32/bin/startup.sh
 2. Navigate to 
 	   http://localhost:8080/java-refactoring-exercise-0.0.1-SNAPSHOT
 3. Shutdown tomcat server
 
-	/usr/local/apache-tomcat-8.0.32/shutdown.sh
+	/usr/local/apache-tomcat-8.0.32/bin/shutdown.sh
 
 Refactoring Changes
 -------------------
