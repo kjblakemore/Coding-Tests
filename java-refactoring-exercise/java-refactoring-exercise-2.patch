@@ -1,0 +1,813 @@
+From 03ff20e3f739269ab707d164512a0fbabce31e3d Mon Sep 17 00:00:00 2001
+From: kjblakemore <karenblakemore@Karens-MacBook-Pro-4.local>
+Date: Tue, 31 May 2016 11:44:22 -0600
+Subject: [PATCH] Initial checkin of SAP Hybris project.
+
+---
+ java-refactoring-exercise/.gitignore               |  15 +++
+ java-refactoring-exercise/Notes.md                 |  44 +++++++
+ java-refactoring-exercise/README.markdown          |  64 ++++++++++
+ java-refactoring-exercise/pom.xml                  |  47 ++++++++
+ .../com/h2rd/refactoring/usermanagement/User.java  |  55 +++++++++
+ .../h2rd/refactoring/usermanagement/UserDao.java   |  76 ++++++++++++
+ .../com/h2rd/refactoring/web/UserResource.java     | 133 +++++++++++++++++++++
+ .../src/main/resources/application-config.xml      |  10 ++
+ .../src/main/webapp/META-INF/MANIFEST.MF           |   3 +
+ .../src/main/webapp/WEB-INF/web.xml                |  25 ++++
+ .../src/main/webapp/index.jsp                      |   8 ++
+ .../integration/UserIntegrationTest.java           |  50 ++++++++
+ .../com/h2rd/refactoring/unit/UserDaoUnitTest.java |  87 ++++++++++++++
+ .../refactoring/unit/UserResourceUnitTest.java     |  35 ++++++
+ .../com/h2rd/refactoring/unit/UserUnitTest.java    |  28 +++++
+ 15 files changed, 680 insertions(+)
+ create mode 100644 java-refactoring-exercise/.gitignore
+ create mode 100644 java-refactoring-exercise/Notes.md
+ create mode 100755 java-refactoring-exercise/README.markdown
+ create mode 100755 java-refactoring-exercise/pom.xml
+ create mode 100755 java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/User.java
+ create mode 100644 java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/UserDao.java
+ create mode 100644 java-refactoring-exercise/src/main/java/com/h2rd/refactoring/web/UserResource.java
+ create mode 100644 java-refactoring-exercise/src/main/resources/application-config.xml
+ create mode 100755 java-refactoring-exercise/src/main/webapp/META-INF/MANIFEST.MF
+ create mode 100755 java-refactoring-exercise/src/main/webapp/WEB-INF/web.xml
+ create mode 100755 java-refactoring-exercise/src/main/webapp/index.jsp
+ create mode 100644 java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/integration/UserIntegrationTest.java
+ create mode 100644 java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserDaoUnitTest.java
+ create mode 100644 java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserResourceUnitTest.java
+ create mode 100644 java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserUnitTest.java
+
+diff --git a/java-refactoring-exercise/.gitignore b/java-refactoring-exercise/.gitignore
+new file mode 100644
+index 0000000..2090ab1
+--- /dev/null
++++ b/java-refactoring-exercise/.gitignore
+@@ -0,0 +1,15 @@
++*/target/**
++target/
++.project
++*/.project
++*/.classpath
++.metadata/*
++*.iml
++*.ipr
++*.iws
++*.swp
++*.orig
++*.rej
++*.ids
++out/*
++.idea/*
+diff --git a/java-refactoring-exercise/Notes.md b/java-refactoring-exercise/Notes.md
+new file mode 100644
+index 0000000..f21f864
+--- /dev/null
++++ b/java-refactoring-exercise/Notes.md
+@@ -0,0 +1,44 @@
++App Deployment
++--------------
++1. Startup tomcat server
++	
++	/usr/local/apache-tomcat-8.0.32/startup.sh
++2. Navigate to 
++	   http://localhost:8080/java-refactoring-exercise-0.0.1-SNAPSHOT
++3. Shutdown tomcat server
++
++	/usr/local/apache-tomcat-8.0.32/shutdown.sh
++
++Refactoring Changes
++-------------------
++**usermanagement/User.java**
++   * Isolated processing of user data structure to the User class.
++
++**usermanagement/UserDao.java**
++   * Changed data structure for saved users from a list to a hash map, 
++	 using email addresses as keys.
++   * Changed error handling from exceptions to returning an error 
++     indication which can then be handled at a higher level in a more
++     user-friendly fashion.
++   * Changed method arguments from User ojbect to individual fields
++     (i.e., name, email & roles), to keep knowlege of User implementation 
++     in User class.
++
++**web/UserResource.java**
++   * Changed to pass individual field values (i.e., name, email & roles)
++     to UserDao class, keeping User implementation confined to User class.
++   * Added check for number of roles, to implement required business logic.
++   * Added processing of error conditions, such as duplicate user saves.
++
++**test/unit/UserUnitTest.java**
++   * New file to test User class.
++
++**test/unit/UserDaoUnitTest.java**
++   * Extensive changes and additions to test UserDao functionality.
++
++**test/unit/UserResourceUnitTest.java**
++   * Changed to support new UserDao interface.
++
++**test/integration/UserIntegrationTest.java**
++   * Changed to support new UserDao interface
++   * Added delete user test.
+diff --git a/java-refactoring-exercise/README.markdown b/java-refactoring-exercise/README.markdown
+new file mode 100755
+index 0000000..928a48f
+--- /dev/null
++++ b/java-refactoring-exercise/README.markdown
+@@ -0,0 +1,64 @@
++Java Refactoring Exercise 
++=========================
++
++**Please, before starting this exercise, read through all of the instructions carefully!**
++
++Introduction
++------------
++
++This project is used within the hybris software hiring process to determine knowledge of Java/Spring best practices and refactoring.
++
++The idea of this exercise is to evaluate your ability to identify poor coding practices and improve the code through the use of best practices.
++
++The main project is a very basic user management application. We are not looking to add any supplementary features, instead we are verifying the following items:
++
++* Your knowledge of REST
++* Your knowledge of Maven
++* Your knowledge of Spring
++* Your ability to identify and refactor poor Java code
++* Your ability to identify and fix bugs
++* Your ability to apply proven design principles
++* Your ability to write useful and effective tests
++
++Feel free to modify whatever you want! :)
++
++Prerequisites
++-------------
++
++* You must have a Github account. If you don't have one, please create one via the [Github website](http://github.com/).
++
++* This repo uses Git for source control management (SCM). If you don't already have the git utility already installed on your machine you will need to install it. To do so, check out the [git downloads page](http://git-scm.com/downloads).
++
++* To build this project you must use Maven 3.x. If you do not have Maven already installed on your machine you will need to install it. To do so, check out the [Maven downloads](http://maven.apache.org/download.cgi).
++
++* For deployment you can use whatever web container/application server you prefer. We use [Tomcat 7.0.26](http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.26/bin/) to validate that the application will start up correctly.
++
++Instructions
++------------
++
++1. Clone this repo from Github to your local machine 
++1. At the project root directory, run the following command from the command-line:
++    `$ mvn package`
++1. Once the previous step completes successfully, the build should have run successfully and every test should be green
++1. Now perform the refactoring you deem necessary by using your knowledge of Java/Spring best practices. Remember that this includes both code and tests. Also, please feel free to innovate!
++1. Please make sure that your code compiles and that all tests are green when you are done
++1. When you are finished please commit your code on your local machine and then [create a patch using git](http://git-scm.com/docs/git-format-patch). Please DO NOT create a pull request against this repo.
++1. The final step is to send an email to your contact at hybris software to inform this person that you have completed the exercise. Please make sure to attach a copy of the patch containing your changes!
++
++Business Requirements
++---------------------
++
++* The user's email is a unique identifier and should be handled accordingly.
++* A user should have at least one role.
++
++Tips
++----
++
++* Unit tests != integration tests
++* Spring dependency is provided, feel free to use it
++* Don't be afraid to import additional dependencies if you think you need them
++* Remember that you will have to handle concurrent requests
++* Your final architecture should be portable, extensible and easily maintainable
++
++Good luck!
++
+diff --git a/java-refactoring-exercise/pom.xml b/java-refactoring-exercise/pom.xml
+new file mode 100755
+index 0000000..91fa35e
+--- /dev/null
++++ b/java-refactoring-exercise/pom.xml
+@@ -0,0 +1,47 @@
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
++
++	<modelVersion>4.0.0</modelVersion>
++	<groupId>com.h2rd</groupId>
++	<artifactId>java-refactoring-exercise</artifactId>
++	<packaging>war</packaging>
++	<version>0.0.1-SNAPSHOT</version>
++
++	<name>Java Refactoring Exercise</name>
++	<description>Java Refactoring Exercise</description>
++
++    <dependencies>
++        <dependency>
++            <groupId>junit</groupId>
++            <artifactId>junit</artifactId>
++            <version>4.8.2</version>
++        </dependency>
++        <dependency>
++            <groupId>javax.servlet</groupId>
++            <artifactId>jstl</artifactId>
++            <version>1.2</version>
++        </dependency>
++        <dependency>
++	        <groupId>javax.servlet</groupId>
++	        <artifactId>servlet-api</artifactId>
++	        <version>2.5</version>
++        </dependency>
++        <dependency>
++            <groupId>com.sun.jersey</groupId>
++            <artifactId>jersey-server</artifactId>
++            <version>1.8</version>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework</groupId>
++            <artifactId>spring-context</artifactId>
++            <version>3.1.2.RELEASE</version>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework</groupId>
++            <artifactId>spring-core</artifactId>
++            <version>3.1.2.RELEASE</version>
++        </dependency>
++    </dependencies>
++
++</project>
+diff --git a/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/User.java b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/User.java
+new file mode 100755
+index 0000000..c5301f2
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/User.java
+@@ -0,0 +1,55 @@
++package com.h2rd.refactoring.usermanagement;
++
++import javax.xml.bind.annotation.XmlRootElement;
++import java.util.List;
++
++/**
++ * The User class maintains information for individual users who have been registered.
++ */
++@XmlRootElement
++public class User {
++    private String email;       // Unique identifier for user.
++    private String name;        // User's name.
++    private List<String> roles; // User roles, eg admin, operations
++
++    /**
++     * Create a new User.  If arguments are illegal, return null  Otherwise,
++     * return user object.
++     */
++    public User(String name, String email, List<String> roles) {
++        this.name = name;
++        this.email = email;
++        this.roles = roles;
++    }
++
++    /**
++     * Update user name and roles.  If arguments are illegal, return false.
++     * Otherwise, return true.
++     */
++    public void update(String name, List<String> roles) {
++        this.name = name;
++        this.roles = roles;
++    }
++
++    /**
++     * Get and Set Methods.
++     */
++    public String getName() {
++        return name;
++    }
++    public void setName(String name) {
++        this.name = name;
++    }
++    public String getEmail() {
++        return email;
++    }
++    public void setEmail(String email) {
++        this.email = email;
++    }
++    public List<String> getRoles() {
++        return roles;
++    }
++    public void setRoles(List<String> roles) {
++        this.roles = roles;
++    }
++}
+diff --git a/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/UserDao.java b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/UserDao.java
+new file mode 100644
+index 0000000..5a8bc8f
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/usermanagement/UserDao.java
+@@ -0,0 +1,76 @@
++package com.h2rd.refactoring.usermanagement;
++
++import java.util.HashMap;
++import java.util.List;
++import java.util.Collection;
++
++/**
++ * The UserDao class maintains informatioin for all users who are currently 
++ * registered.  The users are uniquely identified by their email address.
++ */
++public class UserDao {
++
++    private static HashMap<String, User> users;    // Maps email to user entry
++
++    public static UserDao userDao;
++
++    /**
++     * Return Data Access Object to User entries.  If first call, initialze
++     * the access object and user database.
++     */
++    public static UserDao getUserDao() {
++        if (userDao == null) {
++            users = new HashMap<String, User>();
++            userDao = new UserDao();
++        }
++        return userDao;
++    }
++
++    /**
++     * Return collection of all users that are currently registered..
++     *
++     */
++    public Collection<User> getUsers() {
++        return users.values();
++    }
++
++    /**
++     * Save user info.  If already saved, return null.  Else, return user object.
++     */
++    public User saveUser(String name, String email, List<String> roles) {
++        User user;
++
++        if (users.containsKey(email)==true) return null;
++        user = new User(name, email, roles);
++        users.put(email, user);
++        return user;
++    }
++
++    /**
++     * Delete user.  If not previously saved, return null. Else, return user object.
++     */
++    public User deleteUser(String email) {
++        return users.remove(email);
++    }
++
++    /**
++     * Update user name and roles.  If user was not previously saved, return null. 
++     * Else, return user object.
++     */
++    public User updateUser(String name, String email, List<String> roles) {
++        User user;
++
++        user = users.get(email);
++        if (user == null) return null;
++
++        user.update(name, roles);
++        return user;
++    }
++
++    /**
++     * Find user.  If not found, return null.  Else, return user object.
++     */
++    public User findUser(String email) {
++        return users.get(email);
++    }
++}
+diff --git a/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/web/UserResource.java b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/web/UserResource.java
+new file mode 100644
+index 0000000..cde9704
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/java/com/h2rd/refactoring/web/UserResource.java
+@@ -0,0 +1,133 @@
++package com.h2rd.refactoring.web;
++
++import com.h2rd.refactoring.usermanagement.UserDao;
++import com.h2rd.refactoring.usermanagement.User;
++
++import javax.ws.rs.*;
++import javax.ws.rs.core.GenericEntity;
++import javax.ws.rs.core.Response;
++
++import org.springframework.context.ApplicationContext;
++import org.springframework.context.support.ClassPathXmlApplicationContext;
++import org.springframework.stereotype.Repository;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Collection;
++
++@Path("/users")
++@Repository
++public class UserResource{
++
++    public UserDao userDao;
++
++    /**
++     * Add user to register.  An error is returned, if the user already has been
++     * registered or there is not at least one role.
++     */
++    @GET
++    @Path("add/")
++    public Response addUser(@QueryParam("name") String name,
++                            @QueryParam("email") String email,
++                            @QueryParam("roles") List<String> roles) {
++        User user;
++        int val;
++
++        if (roles.size() <= 0) {
++            user = null;
++            val = 400;  // 400 = BAD_REQUEST
++        } else {    
++            if (userDao == null) {
++                userDao = UserDao.getUserDao();
++            }
++            user = userDao.saveUser(name, email, roles);
++            val = (user == null) ? 409 : 200;   // 409 = CONFLICT, 200 = OK
++        }
++        return Response.status(val).entity(user).build();
++    }
++
++
++    /**
++     * Update user name and roles.  An error is returned if there is not at least one
++     * role or the user is not already registered.
++     */
++    @GET
++    @Path("update/")
++    public Response updateUser(@QueryParam("name") String name,
++                               @QueryParam("email") String email,
++                               @QueryParam("roles") List<String> roles) {
++        User user;
++        int val;
++
++        if (roles.size() <= 0) {
++            user = null;
++            val = 400;  // 400 = BAD_REQUEST
++        } else {
++            if (userDao == null) {
++                userDao = UserDao.getUserDao();
++            }
++            user = userDao.updateUser(name, email, roles);
++            val = (user==null)? 404 : 200;  // 404 = NOT_FOUND, 200 = OK
++        }
++        return Response.status(val).entity(user).build();
++    }
++
++    /**
++     * Remove user's registration.  If user not found, respond with error.
++     * Else, respond with success and user object.
++     */
++    @GET
++    @Path("delete/")
++    public Response deleteUser(@QueryParam("email") String email) {
++                
++        User user;
++        int val;
++
++        if (userDao == null) {
++            userDao = UserDao.getUserDao();
++        }
++
++        user = userDao.deleteUser(email);
++        val = (user==null)? 404 : 200;  // 404 = NOT_FOUND, 200 = OK
++        return Response.status(val).entity(user).build();
++    }
++
++    /**
++     * Return all users that are currently registered.
++     */
++    @GET
++    @Path("find/")
++    public Response getUsers() {
++
++        Collection<User> users;
++    	
++        ApplicationContext context = new ClassPathXmlApplicationContext(new String[] {
++    		"classpath:/application-config.xml"	
++    	});
++    	userDao = context.getBean(UserDao.class);
++    	users = userDao.getUsers();
++    	
++
++        GenericEntity<Collection<User>> usersEntity = new GenericEntity<Collection<User>>(users) {};
++        return Response.status(200).entity(usersEntity).build();    // 200 = OK
++    }
++
++    /**
++     * Search for user in registration.  If not found, return error, else return 
++     * success and user object.
++     */
++    @GET
++    @Path("search/")
++    public Response findUser(@QueryParam("email") String email) {
++        User user;
++        int val;
++
++        if (userDao == null) {
++            userDao = UserDao.getUserDao();
++        }
++
++        user = userDao.findUser(email);
++        val = (user==null)? 404 : 200;  // 404 = NOT_FOUND, 200 = OK
++        return Response.status(val).entity(user).build();
++    }
++}
+diff --git a/java-refactoring-exercise/src/main/resources/application-config.xml b/java-refactoring-exercise/src/main/resources/application-config.xml
+new file mode 100644
+index 0000000..db17540
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/resources/application-config.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++
++<beans xmlns="http://www.springframework.org/schema/beans"
++    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++    xsi:schemaLocation="http://www.springframework.org/schema/beans 
++       http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
++ 
++    <bean id="userDao" class="com.h2rd.refactoring.usermanagement.UserDao" />
++     
++</beans>
+diff --git a/java-refactoring-exercise/src/main/webapp/META-INF/MANIFEST.MF b/java-refactoring-exercise/src/main/webapp/META-INF/MANIFEST.MF
+new file mode 100755
+index 0000000..254272e
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/webapp/META-INF/MANIFEST.MF
+@@ -0,0 +1,3 @@
++Manifest-Version: 1.0
++Class-Path: 
++
+diff --git a/java-refactoring-exercise/src/main/webapp/WEB-INF/web.xml b/java-refactoring-exercise/src/main/webapp/WEB-INF/web.xml
+new file mode 100755
+index 0000000..1cf6ba8
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/webapp/WEB-INF/web.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<web-app xmlns="http://java.sun.com/xml/ns/javaee"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
++         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
++         version="2.5">
++
++    <display-name>java-refactoring-exercise</display-name>
++
++  	<servlet>
++		<servlet-name>refactoring-exercise</servlet-name>
++		<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
++		<init-param>
++		     <param-name>com.sun.jersey.config.property.packages</param-name>
++		     <param-value>com.h2rd.refactoring</param-value>
++		</init-param>
++		<load-on-startup>1</load-on-startup>
++	</servlet>
++ 
++	<servlet-mapping>
++		<servlet-name>refactoring-exercise</servlet-name>
++		<url-pattern>/rest/*</url-pattern>
++	</servlet-mapping>
++
++</web-app>
+diff --git a/java-refactoring-exercise/src/main/webapp/index.jsp b/java-refactoring-exercise/src/main/webapp/index.jsp
+new file mode 100755
+index 0000000..f5ef90a
+--- /dev/null
++++ b/java-refactoring-exercise/src/main/webapp/index.jsp
+@@ -0,0 +1,8 @@
++<html>
++<head>
++    <title>H2RD - Java Refactoring Exercise</title>
++</head>
++<body>
++    <h1>Java Refactoring Exercise</h1>
++</body>
++</html>
+diff --git a/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/integration/UserIntegrationTest.java b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/integration/UserIntegrationTest.java
+new file mode 100644
+index 0000000..b92d848
+--- /dev/null
++++ b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/integration/UserIntegrationTest.java
+@@ -0,0 +1,50 @@
++package test.com.h2rd.refactoring.integration;
++
++import java.util.Arrays;
++import java.util.List;
++
++import javax.ws.rs.core.Response;
++
++import junit.framework.Assert;
++
++import org.junit.Test;
++
++import com.h2rd.refactoring.usermanagement.User;
++import com.h2rd.refactoring.web.UserResource;
++
++public class UserIntegrationTest {
++	
++	@Test
++	public void createUserTest() {
++		UserResource userResource = new UserResource();
++		
++        String name = "integration";
++        String email = "initial@integration.com";
++        List<String> roles = Arrays.asList("admin", "master");
++        
++        Response response = userResource.addUser(name, email, roles);
++        Assert.assertEquals(200, response.getStatus());
++	}
++
++	@Test
++	public void updateUserTest() {
++		UserResource userResource = new UserResource();
++
++		String name = "updated";
++        String email = "initial@integration.com";
++        List<String> roles = Arrays.asList("admin", "master");
++        
++        Response response = userResource.updateUser(name, email, roles);
++        Assert.assertEquals(200, response.getStatus());
++	}
++
++	@Test
++	public void deleteUserTest() {
++		UserResource userResource = new UserResource();
++
++        String email = "initial@integration.com";
++        
++        Response response = userResource.deleteUser(email);
++        Assert.assertEquals(200, response.getStatus());
++	}
++}
+diff --git a/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserDaoUnitTest.java b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserDaoUnitTest.java
+new file mode 100644
+index 0000000..b68ee44
+--- /dev/null
++++ b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserDaoUnitTest.java
+@@ -0,0 +1,87 @@
++package test.com.h2rd.refactoring.unit;
++
++import com.h2rd.refactoring.usermanagement.User;
++import com.h2rd.refactoring.usermanagement.UserDao;
++import junit.framework.Assert;
++import org.junit.Test;
++
++import java.util.Arrays;
++import java.util.List;
++import java.util.Collection;
++
++public class UserDaoUnitTest {
++    @Test
++    public void UserTest() {
++        UserDao userDao;
++        User user;
++        String name, name1, name2;
++        String email, email1, email2;
++        List<String> roles, roles1, roles2;
++        Collection<User> userValues;
++
++        userDao = UserDao.getUserDao();
++
++        name1 = "Fake Name";
++        email1 = "fake@email.com";
++        roles1 = Arrays.asList("admin", "master");
++
++        /* Test saveUser */
++        user = userDao.saveUser(name1, email1, roles1);
++        Assert.assertNotNull(user);     
++
++        user = userDao.findUser(email1);
++        Assert.assertNotNull(user);     
++        Assert.assertEquals(name1, user.getName());
++        Assert.assertEquals(email1, user.getEmail());
++        Assert.assertEquals(roles1, user.getRoles());
++
++        /* Test delete previously saved user */
++        user = userDao.deleteUser(email1);
++        Assert.assertNotNull(user);
++
++        /* Test deleting unsaved user */
++        user = userDao.deleteUser(email1);
++        Assert.assertNull(user);
++
++        /* Test update user */
++        user = userDao.saveUser(name1, email1, roles1);
++
++        name2 = "New Name";
++        roles2 = Arrays.asList("admin", "master", "another role");
++        user = userDao.updateUser(name2, email1, roles2);
++        Assert.assertNotNull(user);
++
++        user = userDao.findUser(email1); 
++        Assert.assertNotNull(user);    
++        Assert.assertEquals(name2, user.getName());
++        Assert.assertEquals(user.getEmail(), email1);
++        Assert.assertEquals(user.getRoles(), roles2);
++
++        /* Test getUsers */
++        email2 = "another@email.com";
++        user = userDao.saveUser(name1, email2, roles1);
++        Assert.assertNotNull(user);
++
++        userValues = userDao.getUsers();
++        Assert.assertNotNull(userValues);
++        Assert.assertEquals(2, userValues.size());
++
++        for (User u: userValues) {
++            name = u.getName();
++            email = u.getEmail();
++            roles = u.getRoles();
++            if(email == email1) {
++                Assert.assertEquals(name2, u.getName());
++                Assert.assertEquals(email1, u.getEmail());
++                Assert.assertEquals(roles2, u.getRoles());
++            } else if(email == email2) {
++                Assert.assertEquals(name1, u.getName());
++                Assert.assertEquals(email2, u.getEmail());
++                Assert.assertEquals(roles1, u.getRoles());
++            } else Assert.fail("get Users: Invalid email");
++        }
++
++        userDao.deleteUser(email1);
++        userDao.deleteUser(email2);
++    }
++}
+\ No newline at end of file
+diff --git a/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserResourceUnitTest.java b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserResourceUnitTest.java
+new file mode 100644
+index 0000000..dc7739d
+--- /dev/null
++++ b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserResourceUnitTest.java
+@@ -0,0 +1,35 @@
++package test.com.h2rd.refactoring.unit;
++
++import com.h2rd.refactoring.usermanagement.User;
++import com.h2rd.refactoring.usermanagement.UserDao;
++import com.h2rd.refactoring.web.UserResource;
++import junit.framework.Assert;
++import org.junit.Test;
++
++import javax.ws.rs.core.Response;
++
++import java.util.List;
++import java.util.Arrays;
++
++public class UserResourceUnitTest {
++
++    UserResource userResource;
++    UserDao userDao;
++
++    @Test
++    public void getUsersTest() {
++        User user;
++
++        userResource = new UserResource();
++        userDao = UserDao.getUserDao();
++
++        String name = "fake user";
++        String email = "fake@user.com";
++        List<String> roles = Arrays.asList("admin", "master");
++
++        user = userDao.saveUser(name, email, roles);
++
++        Response response = userResource.getUsers();
++        Assert.assertEquals(200, response.getStatus());
++    }
++}
+diff --git a/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserUnitTest.java b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserUnitTest.java
+new file mode 100644
+index 0000000..f0e9c1c
+--- /dev/null
++++ b/java-refactoring-exercise/src/test/java/test/com/h2rd/refactoring/unit/UserUnitTest.java
+@@ -0,0 +1,28 @@
++package test.com.h2rd.refactoring.unit;
++
++import com.h2rd.refactoring.usermanagement.User;
++import junit.framework.Assert;
++import org.junit.Test;
++
++import java.util.Arrays;
++import java.util.List;
++
++public class UserUnitTest {
++
++    @Test
++    public void userUnitTest() {
++        User user;
++
++        String name = "Fake Name";
++        String email = "fake@email.com";
++        List<String> roles = Arrays.asList("admin", "master");
++
++        user = new User(name, email, roles);
++        name = "New Name";
++        roles = Arrays.asList("new role", "admin", "master");
++        user.update(name, roles);
++
++        Assert.assertEquals(name, user.getName());
++        Assert.assertEquals(roles, user.getRoles());
++    }
++}
+\ No newline at end of file
+-- 
+2.7.4 (Apple Git-66)
+
