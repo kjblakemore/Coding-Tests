@@ -9,6 +9,7 @@ class BitManipulation {
 	}
 
 	/**
+	 * Question 5.2
 	 * Convert a floating point number between 0 and 1 to a string 
 	 * representation of its' binary value.  If the number can not be 
 	 * accurately represented in 32 characters, return null.
@@ -29,6 +30,7 @@ class BitManipulation {
 	}
 
 	/**
+	 * Question 5.3
 	 * Determine the maximum number of sequential 1s that could be created by 
 	 * flipping one bit to 1.
 	 */
@@ -59,6 +61,7 @@ class BitManipulation {
 	}
 
 	/**
+	 * Question 5.4
 	 * Given a positive integer, return the next smallest and next largest number that has the same number
 	 * of one bits in its' binary representation.
 	 * The next largest number is computed by converting numbers of the form xx...x011..100..0 to xx..x100..001..1, 
