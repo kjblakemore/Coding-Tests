@@ -3,7 +3,7 @@ import java.util.Collections;
 
 public class ObjectOrientedDesign {
 
-	/**
+/**
  * Question 7.1
  * The DeckofCards class implements a deck of cards used for blackjack.
  */
