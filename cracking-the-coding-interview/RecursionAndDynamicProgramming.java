@@ -83,7 +83,7 @@ public class RecursionAndDynamicProgramming {
 				return path;
 			}
 
-			// Check adjacent cells.  If still on grid and cell not closed, add to quequed set, so
+			// Check adjacent cells.  If still on grid and cell not closed, add to queued set, so
 			// will not be revisited, add to visited queue and add mapping to parent in parentMap.
 			if((cell.col + 1 < c) && grid[cell.row][cell.col+1] == 0) {	// first check downward cell
 				adjacentCell = new Cell(cell.row, cell.col + 1);
