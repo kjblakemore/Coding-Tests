@@ -9,3 +9,4 @@
   * java-refactoring-exercise - a basic user management application
   * scala/code.scala - same as java subdirectory
   * scala/code2.scala - one line scala array & math functions
+  * spark-deduplication - jupyter notebook to deduplicate entries using Python Spark SQL
