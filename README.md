@@ -13,3 +13,4 @@
   * scala/code.scala - same as java subdirectory
   * scala/code2.scala - one line scala array & math functions
   * slcsp - pandas python script to process large csv data sets
+  * sorce-solstice - jupyter notebook to analyze sorce solstice scans
